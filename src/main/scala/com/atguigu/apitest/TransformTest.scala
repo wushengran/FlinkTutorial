@@ -1,5 +1,7 @@
 package com.atguigu.apitest
 
+import org.apache.flink.api.common.functions.{FilterFunction, RichMapFunction}
+import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.scala._
 
 /**
@@ -37,9 +39,63 @@ object TransformTest {
       .reduce( (curState, newData) =>
         SensorReading( curState.id, newData.timestamp + 1, curState.temperature.min(newData.temperature)) )
 
-    reduceStream.print("reduce")
+    // 4. 分流操作，split/select，以30度为界划分高低温流
+    val splitStream: SplitStream[SensorReading] = dataStream
+      .split( data => {
+        if( data.temperature > 30 )
+          Seq("high")
+        else
+          Seq("low")
+      } )
+    val highTempStream: DataStream[SensorReading] = splitStream.select("high")
+    val lowTempStream: DataStream[SensorReading] = splitStream.select("low")
+    val allTempStream: DataStream[SensorReading] = splitStream.select("high", "low")
+
+    // 5. 合流操作，connect/comap
+    val highWarningStream: DataStream[(String, Double)] = highTempStream
+      .map( data => (data.id, data.temperature) )
+    val connectedStreams: ConnectedStreams[(String, Double), SensorReading] = highWarningStream
+      .connect( lowTempStream )
+    val coMapStream: DataStream[(String, Double, String)] = connectedStreams
+      .map(
+        highWarningData => (highWarningData._1, highWarningData._2, "warning"),
+        lowTempData => (lowTempData.id, lowTempData.temperature, "normal")
+      )
+
+    // union操作：可以同时合并多条流
+    val unionStream: DataStream[SensorReading] = highTempStream.union(lowTempStream)
+
+    // 6. 自定义函数类
+    val resultStream: DataStream[SensorReading] = dataStream
+      .filter( new MyFilter() )
+
+    // 打印输出
+//    reduceStream.print("reduce")
+//    highTempStream.print("high")
+//    lowTempStream.print("low")
+//    allTempStream.print("all")
+//    coMapStream.print("coMap")
+
+    resultStream.print("result")
 
     env.execute("transform test job")
 
   }
+}
+
+// 自定义一个filter函数类
+class MyFilter() extends FilterFunction[SensorReading]{
+  override def filter(value: SensorReading): Boolean = {
+    value.id.startsWith("sensor_1")
+  }
+}
+
+// 自定义一个RichMapFunction函数类
+class MyRichMapper() extends RichMapFunction[SensorReading, String]{
+
+  override def open(parameters: Configuration): Unit = super.open(parameters)
+
+  override def map(value: SensorReading): String = value.id
+
+  override def close(): Unit = super.close()
 }

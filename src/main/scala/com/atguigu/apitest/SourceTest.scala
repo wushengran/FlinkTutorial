@@ -3,7 +3,7 @@ package com.atguigu.apitest
 import java.util.Properties
 
 import org.apache.flink.api.common.serialization.SimpleStringSchema
-import org.apache.flink.streaming.api.functions.source.SourceFunction
+import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, SourceFunction}
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011
 
@@ -64,7 +64,7 @@ object SourceTest {
 }
 
 // 自定义生成测试数据源的SourceFunction
-class MySensorSource() extends SourceFunction[SensorReading]{
+class MySensorSource() extends RichSourceFunction[SensorReading]{
   // 定义一个标识位，用来表示数据源是否正常运行
   var running: Boolean = true
 
