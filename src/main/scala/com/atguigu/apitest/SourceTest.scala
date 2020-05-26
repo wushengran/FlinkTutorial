@@ -83,14 +83,14 @@ class MySensorSource() extends RichSourceFunction[SensorReading]{
 
     // 无限循环生成数据，如果cancel的话就停止
     while(running){
-      // 更新当前温度值，再之前温度上增加微小扰动
-      curtemp = curtemp.map(
-        data => (data._1, data._2 + rand.nextGaussian())
-      )
-      // 获取当前时间戳，包装样例类
-      val curTs = System.currentTimeMillis()
-      curtemp.foreach(
-        data => ctx.collect( SensorReading( data._1, curTs, data._2 ) )
+        // 更新当前温度值，再之前温度上增加微小扰动
+        curtemp = curtemp.map(
+          data => (data._1, data._2 + rand.nextGaussian())
+        )
+        // 获取当前时间戳，包装样例类
+        val curTs = System.currentTimeMillis()
+        curtemp.foreach(
+          data => ctx.collect( SensorReading( data._1, curTs, data._2 ) )
       )
       // 间隔200ms
       Thread.sleep(200)
