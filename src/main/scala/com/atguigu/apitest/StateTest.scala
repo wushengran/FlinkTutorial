@@ -73,9 +73,11 @@ class TempChangeAlert(threshold: Double) extends RichFlatMapFunction[SensorReadi
   // 定义一个状态，用来保存上一次的温度值
   //  lazy val lastTempState: ValueState[Double] = getRuntimeContext.getState( new ValueStateDescriptor[Double]("last-temp", classOf[Double]) )
   private var lastTempState: ValueState[Double] = _
+  private var isFirstTempState: ValueState[Boolean] = _
 
   override def open(parameters: Configuration): Unit = {
     lastTempState = getRuntimeContext.getState( new ValueStateDescriptor[Double]("last-temp", classOf[Double]) )
+    isFirstTempState = getRuntimeContext.getState( new ValueStateDescriptor[Boolean]("is-firsttemp", classOf[Boolean], true) )
   }
 
   override def flatMap(value: SensorReading, out: Collector[(String, Double, Double)]): Unit = {
@@ -87,9 +89,10 @@ class TempChangeAlert(threshold: Double) extends RichFlatMapFunction[SensorReadi
 
     // 对比两次温度值，如果大于阈值，报警
     val diff = (value.temperature - lastTemp).abs
-    if( diff > threshold ){
+    if( diff > threshold && !isFirstTempState.value() ){
       out.collect( (value.id, lastTemp, value.temperature) )
     }
+    isFirstTempState.update(false)
   }
 }
 
