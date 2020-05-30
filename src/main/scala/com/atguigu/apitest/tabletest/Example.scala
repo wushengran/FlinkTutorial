@@ -42,7 +42,8 @@ object Example {
       .select("id, temperature")
       .filter("id == 'sensor_1'")
     // 3.2 写sql实现转换
-    tableEnv.registerTable("dataTable", dataTable)
+//    tableEnv.registerTable("dataTable", dataTable)
+    tableEnv.createTemporaryView("dataTable", dataTable)
     val resultSqlTable: Table = tableEnv.sqlQuery(
       """
         |select id, temperature
