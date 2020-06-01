@@ -34,6 +34,8 @@ object KafkaPipelineTest {
         .field("id", DataTypes.STRING())
         .field("timestamp", DataTypes.BIGINT())
         .field("temperature", DataTypes.DOUBLE())
+          .field("pt", DataTypes.TIMESTAMP(3))
+          .proctime()
       )
       .createTemporaryTable("kafkaInputTable")
 
