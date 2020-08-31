@@ -20,6 +20,7 @@ object StreamWordCount {
     // 1. 创建执行环境
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
 //    env.setParallelism(10)
+//    env.disableOperatorChaining()
 
     // 2. 接收socket文本流
     val paramTool: ParameterTool = ParameterTool.fromArgs(args)
@@ -31,10 +32,10 @@ object StreamWordCount {
     // 3. 对DataStream进行转换处理
     val resultDataStream: DataStream[(String, Int)] = inputDataStream
       .flatMap(_.split(" "))
-      .filter(_.nonEmpty)
-      .map( (_, 1) )
+      .filter(_.nonEmpty).slotSharingGroup("1")
+      .map( (_, 1) ).disableChaining()
       .keyBy(0)
-      .sum(1)
+      .sum(1).startNewChain()
 
     // 4. 打印输出
     resultDataStream.print().setParallelism(1)
