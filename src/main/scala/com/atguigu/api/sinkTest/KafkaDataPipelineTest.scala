@@ -3,7 +3,7 @@ package com.atguigu.api.sinkTest
 import java.util.Properties
 
 import com.atguigu.api.SensorReading
-import org.apache.flink.api.common.serialization.SimpleStringSchema
+import org.apache.flink.api.common.serialization.{SerializationSchema, SimpleStringSchema}
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.connectors.kafka.{FlinkKafkaConsumer011, FlinkKafkaProducer011}
 
@@ -36,8 +36,13 @@ object KafkaDataPipelineTest {
       } )
 
     // 写入kafka
-    dataStream.map( data => data.toString )
-      .addSink( new FlinkKafkaProducer011[String]("localhost:9092", "sinktest", new SimpleStringSchema()) )
+//    dataStream.map( data => data.toString )
+//      .addSink( new FlinkKafkaProducer011[String]("localhost:9092", "sinktest", new SimpleStringSchema()) )
+
+    dataStream.map( data => (data.id, data.temperature) )
+      .addSink( new FlinkKafkaProducer011[(String, Double)]("localhost:9092", "sinktest", new SerializationSchema[(String, Double)]{
+        override def serialize(element: (String, Double)): Array[Byte] = s"id:${element._1} temp:${element._2}".toArray.map(_.toByte)
+      }) )
 
     env.execute("kafka pipeline job")
   }

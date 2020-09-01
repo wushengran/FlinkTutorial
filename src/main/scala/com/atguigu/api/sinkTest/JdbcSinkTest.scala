@@ -23,7 +23,7 @@ object JdbcSinkTest {
 
     // 读取数据
     val filePath = "D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt"
-    val inputStream: DataStream[String] = env.readTextFile(filePath)
+//    val inputStream: DataStream[String] = env.readTextFile(filePath)
 
     val inputStream4 = env.addSource( new MySensorSource() )
 
