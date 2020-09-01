@@ -1,7 +1,8 @@
 package com.atguigu.api
 
 import org.apache.flink.api.common.functions.RichMapFunction
-import org.apache.flink.api.common.state.ValueStateDescriptor
+import org.apache.flink.api.common.state.{ValueState, ValueStateDescriptor}
+import org.apache.flink.configuration.Configuration
 
 /**
   * Copyright (c) 2018-2028 尚硅谷 All Rights Reserved 
@@ -20,7 +21,17 @@ object StateTest {
 
 class MyStateOperator extends RichMapFunction[SensorReading, String]{
 
-  val myState = getRuntimeContext.getState[Int](new ValueStateDescriptor[Int]("myInt", classOf[Int]))
+//  var myState: ValueState[Int] = _
+  lazy val myState: ValueState[Int] = getRuntimeContext.getState[Int](new ValueStateDescriptor[Int]("myInt", classOf[Int]))
 
-  override def map(value: SensorReading): String = ""
+  override def open(parameters: Configuration): Unit = {
+//    myState = getRuntimeContext.getState[Int](new ValueStateDescriptor[Int]("myInt", classOf[Int]))
+  }
+
+  override def map(value: SensorReading): String = {
+    myState.value()
+    myState.update(10)
+    ""
+  }
+
 }
