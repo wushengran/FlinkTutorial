@@ -34,7 +34,7 @@ object WindowTest {
         val arr = line.split(",")
         SensorReading(arr(0).trim, arr(1).trim.toLong, arr(2).trim.toDouble)
       })
-      .assignAscendingTimestamps( data => data.timestamp * 1000L )    // 升序数据的时间戳提取
+//      .assignAscendingTimestamps( data => data.timestamp * 1000L )    // 升序数据的时间戳提取
       .assignTimestampsAndWatermarks( new BoundedOutOfOrdernessTimestampExtractor[SensorReading](Time.seconds(3)) {
       override def extractTimestamp(element: SensorReading): Long = element.timestamp * 1000L
     } )
